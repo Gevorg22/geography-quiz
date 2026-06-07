@@ -1,0 +1,116 @@
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: rgba(10, 15, 30, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(79, 195, 247, 0.15);
+  z-index: 10;
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.game-header__logo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #74c69d;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.game-header__center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.progress-bar {
+  width: 100%;
+  max-width: 280px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  position: relative;
+  overflow: visible;
+}
+
+.progress-bar__fill {
+  height: 100%;
+  background: linear-gradient(90deg, #74c69d, #4fc3f7);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.progress-bar__label {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.68rem;
+  color: #8baac0;
+  white-space: nowrap;
+}
+
+.game-header__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.game-header__badge {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 5px 11px;
+  border-radius: 16px;
+  border: 1px solid rgba(79, 195, 247, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  white-space: nowrap;
+  color: #e8f4f8;
+}
+
+.game-header__finish-btn {
+  background: transparent;
+  border: 1px solid rgba(230, 57, 70, 0.4);
+  color: rgba(230, 57, 70, 0.8);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.game-header__finish-btn:hover {
+  background: rgba(230, 57, 70, 0.15);
+  border-color: rgba(230, 57, 70, 0.7);
+  color: #e63946;
+}
+
+@media (max-width: 600px) {
+  .game-header {
+    padding: 10px 14px;
+    gap: 8px;
+  }
+
+  .game-header__logo {
+    font-size: 0.95rem;
+  }
+
+  .game-header__badge {
+    font-size: 0.78rem;
+    padding: 4px 8px;
+  }
+
+  .game-header__finish-btn {
+    font-size: 0.72rem;
+    padding: 4px 9px;
+  }
+
+  .progress-bar {
+    max-width: 200px;
+  }
+}

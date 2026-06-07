@@ -1,0 +1,18 @@
+.globe-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.globe-container svg {
+  filter: drop-shadow(0 0 28px rgba(74, 198, 157, 0.28));
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.country {
+  transition: fill 0.12s ease;
+}

@@ -1,0 +1,98 @@
+.task-panel {
+  text-align: center;
+  padding: 14px 20px 10px;
+  flex-shrink: 0;
+}
+
+.task-panel__label {
+  font-size: 0.72rem;
+  color: #8baac0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+
+.task-panel__country {
+  font-size: clamp(1.6rem, 4.5vw, 2.6rem);
+  font-weight: 800;
+  background: linear-gradient(135deg, #fff 0%, #4fc3f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  margin-bottom: 2px;
+}
+
+.task-panel__sub {
+  font-size: 0.8rem;
+  color: #8baac0;
+  margin-bottom: 10px;
+}
+
+.task-panel__row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.attempt-dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.attempt-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+
+.attempt-dot--available {
+  background: #74c69d;
+  box-shadow: 0 0 6px rgba(116, 198, 157, 0.5);
+}
+
+.attempt-dot--used {
+  background: rgba(230, 57, 70, 0.4);
+  border: 1px solid rgba(230, 57, 70, 0.6);
+}
+
+.skip-btn {
+  background: transparent;
+  border: 1px solid rgba(139, 170, 192, 0.25);
+  color: #8baac0;
+  font-size: 0.8rem;
+  padding: 6px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.skip-btn:hover {
+  border-color: rgba(139, 170, 192, 0.5);
+  color: #e8f4f8;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+@media (max-width: 600px) {
+  .task-panel {
+    padding: 10px 14px 8px;
+  }
+
+  .task-panel__row {
+    gap: 12px;
+  }
+
+  .skip-btn {
+    font-size: 0.75rem;
+    padding: 5px 12px;
+  }
+}
