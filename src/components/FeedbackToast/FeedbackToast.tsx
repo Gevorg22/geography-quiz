@@ -1,11 +1,8 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import type { FeedbackState } from "../../hooks/useGame";
 import "./FeedbackToast.css";
 
-/**
- * Фабрика текстовых сообщений по типу тоста.
- * Каждый элемент — функция, принимающая payload и возвращающая строку.
- */
 const MESSAGES: Record<FeedbackState["type"], (f: FeedbackState) => string> = {
   correct: ({ pts }) => `✓ Верно! ${pts && pts > 0 ? `+${pts} ${pts === 1 ? "очко" : "очка"}` : ""}`,
   wrong: ({ attemptsLeft }) =>
@@ -14,28 +11,72 @@ const MESSAGES: Record<FeedbackState["type"], (f: FeedbackState) => string> = {
   skip: ({ country }) => `⏭ Пропущено — ${country}`,
 };
 
+interface VisualViewportSnapshot {
+  offsetLeft: number;
+  offsetTop: number;
+  width: number;
+  height: number;
+}
+
+function getSnapshot(): VisualViewportSnapshot {
+  const vv = window.visualViewport;
+  return {
+    offsetLeft: vv?.offsetLeft ?? 0,
+    offsetTop: vv?.offsetTop ?? 0,
+    width: vv?.width ?? window.innerWidth,
+    height: vv?.height ?? window.innerHeight,
+  };
+}
+
+function useVisualViewport(): VisualViewportSnapshot {
+  const [vp, setVp] = useState<VisualViewportSnapshot>(getSnapshot);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () =>
+      setVp({
+        offsetLeft: vv.offsetLeft,
+        offsetTop: vv.offsetTop,
+        width: vv.width,
+        height: vv.height,
+      });
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, []);
+
+  return vp;
+}
+
+const BOTTOM_OFFSET = 44;
+
 interface FeedbackToastProps {
-  /** Данные активного тоста из useGame. */
   feedback: FeedbackState;
 }
 
-/**
- * Всплывающее уведомление, отображаемое после каждого действия игрока.
- * Анимирует появление и исчезновение через Framer Motion.
- * AnimatePresence с ключом по содержимому тоста находится в App.tsx.
- */
 export default function FeedbackToast({ feedback }: FeedbackToastProps) {
   const getMessage = MESSAGES[feedback.type];
   const text = getMessage ? getMessage(feedback) : "";
+  const { offsetLeft, offsetTop, width, height } = useVisualViewport();
 
   return (
     <motion.div
       className={`feedback-toast feedback-toast--${feedback.type}`}
+      style={{
+        left: offsetLeft + width / 2,
+        top: offsetTop + height - BOTTOM_OFFSET,
+        x: "-50%",
+        y: "-100%",
+      }}
       role="status"
       aria-live="polite"
-      initial={{ opacity: 0, y: -10, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -10, scale: 0.96 }}
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.96 }}
       transition={{ duration: 0.18 }}
     >
       {text}

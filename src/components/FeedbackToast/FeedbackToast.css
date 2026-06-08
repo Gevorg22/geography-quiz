@@ -1,27 +1,12 @@
 .feedback-toast {
   position: fixed;
-  bottom: 44px;
-  left: 50%;
-  transform: translateX(-50%);
   padding: 10px 24px;
   border-radius: 28px;
   font-weight: 600;
   font-size: 0.95rem;
   z-index: 100;
   white-space: nowrap;
-  animation: toast-in 0.18s ease;
   backdrop-filter: blur(12px);
-}
-
-@keyframes toast-in {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
 }
 
 .feedback-toast--correct {
@@ -52,7 +37,6 @@
   .feedback-toast {
     font-size: 0.85rem;
     padding: 8px 18px;
-    bottom: 36px;
     max-width: 90vw;
     white-space: normal;
     text-align: center;
