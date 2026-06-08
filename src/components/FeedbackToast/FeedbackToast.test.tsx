@@ -86,6 +86,7 @@ describe("FeedbackToast", () => {
       offsetTop: 50,
       width: 400,
       height: 700,
+      scale: 1,
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
     };
@@ -134,6 +135,30 @@ describe("FeedbackToast", () => {
 
       const el = screen.getByRole("status");
       expect(el).toBeInTheDocument();
+    });
+
+    it("при scale=2 (зум) компонент рендерится без ошибок", () => {
+      Object.assign(mockVv, { scale: 2, width: 200, height: 350 });
+
+      render(<FeedbackToast feedback={{ type: "correct", pts: 3 }} />);
+      expect(screen.getByRole("status")).toBeInTheDocument();
+      expect(screen.getByRole("status")).toHaveTextContent("✓ Верно! +3 очка");
+    });
+
+    it("при обновлении scale через resize хук пересчитывает масштаб", () => {
+      render(<FeedbackToast feedback={{ type: "wrong", attemptsLeft: 2 }} />);
+
+      const resizeHandler = mockVv.addEventListener.mock.calls.find(
+        ([event]) => event === "resize",
+      )?.[1] as () => void;
+
+      Object.assign(mockVv, { scale: 3, width: 133, height: 233 });
+
+      act(() => {
+        resizeHandler();
+      });
+
+      expect(screen.getByRole("status")).toBeInTheDocument();
     });
   });
 });

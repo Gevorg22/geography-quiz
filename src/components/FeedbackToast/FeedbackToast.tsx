@@ -16,6 +16,7 @@ interface VisualViewportSnapshot {
   offsetTop: number;
   width: number;
   height: number;
+  scale: number;
 }
 
 function getSnapshot(): VisualViewportSnapshot {
@@ -25,6 +26,7 @@ function getSnapshot(): VisualViewportSnapshot {
     offsetTop: vv?.offsetTop ?? 0,
     width: vv?.width ?? window.innerWidth,
     height: vv?.height ?? window.innerHeight,
+    scale: vv?.scale ?? 1,
   };
 }
 
@@ -40,6 +42,7 @@ function useVisualViewport(): VisualViewportSnapshot {
         offsetTop: vv.offsetTop,
         width: vv.width,
         height: vv.height,
+        scale: vv.scale,
       });
     vv.addEventListener("resize", update);
     vv.addEventListener("scroll", update);
@@ -61,7 +64,9 @@ interface FeedbackToastProps {
 export default function FeedbackToast({ feedback }: FeedbackToastProps) {
   const getMessage = MESSAGES[feedback.type];
   const text = getMessage ? getMessage(feedback) : "";
-  const { offsetLeft, offsetTop, width, height } = useVisualViewport();
+  const { offsetLeft, offsetTop, width, height, scale } = useVisualViewport();
+
+  const inv = 1 / scale;
 
   return (
     <motion.div
@@ -70,13 +75,13 @@ export default function FeedbackToast({ feedback }: FeedbackToastProps) {
         left: offsetLeft + width / 2,
         top: offsetTop + height - BOTTOM_OFFSET,
         x: "-50%",
-        y: "-100%",
+        y: `${-100 * inv}%`,
       }}
       role="status"
       aria-live="polite"
-      initial={{ opacity: 0, scale: 0.96 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.96 }}
+      initial={{ opacity: 0, scale: inv * 0.96 }}
+      animate={{ opacity: 1, scale: inv }}
+      exit={{ opacity: 0, scale: inv * 0.96 }}
       transition={{ duration: 0.18 }}
     >
       {text}
