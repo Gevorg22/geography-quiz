@@ -60,6 +60,22 @@ GitHub Actions (CI/CD)
 
 GitHub Pages (хостинг)
 
+## Тесты
+
+Проект покрыт тестами на базе **Vitest** + **React Testing Library** (78 тестов, 9 файлов).
+
+| Файл | Что проверяется |
+|---|---|
+| `hooks/useGame.test.ts` | Игровая логика: угадывание, ошибки, пропуск, рестарт, статистика |
+| `hooks/useTimer.test.ts` | Секундомер: старт, stop, reset, инкремент |
+| `utils/array.test.ts` | Перемешивание массива (Fisher–Yates) |
+| `utils/time.test.ts` | Форматирование времени `мм:сс` |
+| `components/FeedbackToast/` | Сообщения по типу тоста, CSS-модификаторы, aria-атрибуты, Visual Viewport hook (подписка, отписка, масштаб) |
+| `components/TaskPanel/` | Название и язык страны, точки попыток, кнопка пропуска |
+| `components/GameHeader/` | Логотип, прогресс-бар, таймер, очки, кнопка завершения |
+| `components/ZoomControls/` | Кнопки +/−, колбэки, aria-метки |
+| `components/GameOver/` | Статистика попыток, рейтинг, итоговый счёт, кнопка рестарта |
+
 ## Команды
 
 Запуск в режиме разработки
@@ -82,9 +98,13 @@ GitHub Pages (хостинг)
 
     npm run format
 
-Запуск тестов
+Запуск тестов в watch-режиме
 
     npm run test
+
+Однократный прогон тестов
+
+    npm run test:run
 
 Тесты с покрытием
 
