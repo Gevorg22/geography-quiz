@@ -207,15 +207,17 @@ function Globe({ onGuess, results, ref }: GlobeProps) {
       .attr("stroke", GLOBE_COLORS.border)
       .attr("stroke-width", 0.4)
       .attr("cursor", "pointer")
-      .on("mouseenter", function (this: SVGPathElement, _event: MouseEvent, d: GeoJSON.Feature) {
+      .on("pointerenter", function (this: SVGPathElement, event: PointerEvent, d: GeoJSON.Feature) {
+        if (event.pointerType === "touch") return;
         if (!resultsRef.current.get(normalizeId(d.id) ?? "")) {
           d3.select(this).attr("fill", GLOBE_COLORS.hover);
         }
       })
-      .on("mouseleave", function (this: SVGPathElement, _event: MouseEvent, d: GeoJSON.Feature) {
+      .on("pointerleave", function (this: SVGPathElement, event: PointerEvent, d: GeoJSON.Feature) {
+        if (event.pointerType === "touch") return;
         d3.select(this).attr("fill", getCountryFill(resultsRef.current, d.id));
       })
-      .on("click", function (this: SVGPathElement, _event: MouseEvent, d: GeoJSON.Feature) {
+      .on("click", function (this: SVGPathElement, _event: PointerEvent, d: GeoJSON.Feature) {
         if (!isDragging.current) onGuessRef.current(normalizeId(d.id));
       });
 
