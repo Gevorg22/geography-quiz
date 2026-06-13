@@ -85,7 +85,7 @@ describe("GameOver", () => {
   it("вызывает onRestart при нажатии кнопки", async () => {
     const onRestart = vi.fn();
     render(<GameOver stats={baseStats} totalPoints={0} maxPoints={30} elapsed={0} onRestart={onRestart} />);
-    await userEvent.click(screen.getByRole("button", { name: /играть ещё раз/i }));
+    await userEvent.click(screen.getByRole("button", { name: /ещё раз/i }));
     expect(onRestart).toHaveBeenCalledOnce();
   });
 });

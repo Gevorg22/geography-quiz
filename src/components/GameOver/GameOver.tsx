@@ -2,12 +2,11 @@ import { motion } from "framer-motion";
 import { formatTime } from "../../utils/time";
 import { POINTS } from "../../constants/game";
 import type { GameStats } from "../../hooks/useGame";
+import type { GameRecord } from "../../hooks/useHistory";
+import type { GameMode } from "../../types/game";
+import { MODE_LABELS } from "../../types/game";
 import "./GameOver.css";
 
-/**
- * Пороги рейтинга от лучшего к худшему.
- * Первый элемент, чей `min` ≤ доле очков игрока, определяет надпись.
- */
 const RATING_THRESHOLDS = [
   { min: 0.9, label: "🏆 Идеально!" },
   { min: 0.7, label: "🥇 Отлично!" },
@@ -15,18 +14,11 @@ const RATING_THRESHOLDS = [
   { min: 0, label: "📚 Нужно потренироваться!" },
 ];
 
-/**
- * Выбирает текстовую оценку по соотношению заработанных к максимальным очкам.
- */
 function getRating(pts: number, maxPoints: number): string {
   const ratio = pts / maxPoints;
   return RATING_THRESHOLDS.find((t) => ratio >= t.min)?.label ?? "";
 }
 
-/**
- * Конфигурация строк в таблице статистики.
- * Каждая строка связана с ключом GameStats, цветовым модификатором, подписью и ценой.
- */
 const STAT_ROWS: Array<{
   key: keyof GameStats;
   modifier: string;
@@ -40,29 +32,29 @@ const STAT_ROWS: Array<{
 ];
 
 interface GameOverProps {
-  /** Разбивка результатов по попыткам. */
   stats: GameStats;
-  /** Суммарные очки за сессию. */
   totalPoints: number;
-  /** Максимально возможные очки (totalRounds × POINTS.first). */
   maxPoints: number;
-  /** Общее время сессии в секундах. */
   elapsed: number;
-  /** Колбэк при нажатии «Играть ещё раз». */
   onRestart: () => void;
+  onSetup?: () => void;
+  streak?: number;
+  fact?: string;
+  topRecords?: GameRecord[];
+  mode?: GameMode;
 }
 
-/**
- * Экран результатов, появляющийся после завершения игры.
- * Показывает время, разбивку по попыткам, итоговый счёт и рейтинг.
- * Карточка анимируется spring-анимацией при появлении.
- */
 export default function GameOver({
   stats,
   totalPoints,
   maxPoints,
   elapsed,
   onRestart,
+  onSetup,
+  streak = 0,
+  fact,
+  topRecords = [],
+  mode = "classic",
 }: GameOverProps) {
   return (
     <div className="game-over">
@@ -74,7 +66,11 @@ export default function GameOver({
       >
         <div className="game-over__icon">🌍</div>
         <h2 className="game-over__title">Игра завершена!</h2>
+        <p className="game-over__mode">{MODE_LABELS[mode]}</p>
         <p className="game-over__time">⏱ {formatTime(elapsed)}</p>
+        {streak >= 3 && (
+          <p className="game-over__streak">🔥 Лучшая серия: {streak}</p>
+        )}
 
         <ul className="game-over__stats">
           {STAT_ROWS.map(({ key, modifier, label, pts }) => {
@@ -104,9 +100,38 @@ export default function GameOver({
 
         <p className="game-over__rating">{getRating(totalPoints, maxPoints)}</p>
 
-        <button className="game-over__restart-btn" onClick={onRestart}>
-          Играть ещё раз
-        </button>
+        {topRecords.length > 0 && (
+          <div className="game-over__records">
+            <p className="game-over__records-title">🏆 Топ результаты</p>
+            <ol className="game-over__records-list">
+              {topRecords.map((r, i) => (
+                <li key={r.id} className="game-over__record-row">
+                  <span className="game-over__record-rank">#{i + 1}</span>
+                  <span className="game-over__record-pts">{r.totalPoints} оч.</span>
+                  <span className="game-over__record-meta">{formatTime(r.elapsed)}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+
+        {fact && (
+          <div className="game-over__fact">
+            <span className="game-over__fact-icon">📖</span>
+            <p className="game-over__fact-text">{fact}</p>
+          </div>
+        )}
+
+        <div className="game-over__actions">
+          <button className="game-over__restart-btn" onClick={onRestart}>
+            Ещё раз
+          </button>
+          {onSetup && (
+            <button className="game-over__setup-btn" onClick={onSetup}>
+              Настройки
+            </button>
+          )}
+        </div>
       </motion.div>
     </div>
   );

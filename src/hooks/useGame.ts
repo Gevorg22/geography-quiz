@@ -4,91 +4,77 @@ import { COUNTRIES } from "../data/countries";
 import { shuffle } from "../utils/array";
 import { MAX_ATTEMPTS, POINTS, RESULT } from "../constants/game";
 import type { ResultValue } from "../constants/game";
+import type { GameConfig } from "../types/game";
 
-/** Статистика по попыткам за одну сессию. */
 export interface GameStats {
-  /** Страны, угаданные с первой попытки. */
   firstCount: number;
-  /** Страны, угаданные со второй попытки. */
   secondCount: number;
-  /** Страны, угаданные с третьей попытки. */
   thirdCount: number;
-  /** Провалы и пропуски. */
   failedCount: number;
 }
 
-/** Тип уведомления-тоста после каждого действия игрока. */
 export type FeedbackType = "correct" | "wrong" | "fail" | "skip";
 
-/** Данные активного тоста, отображаемого над глобусом. */
 export interface FeedbackState {
-  /** Категория исхода, управляет цветом и текстом тоста. */
   type: FeedbackType;
-  /** Заработанные очки — передаётся только при type === "correct". */
   pts?: number;
-  /** Оставшихся попыток — передаётся только при type === "wrong". */
   attemptsLeft?: number;
-  /** Название страны — передаётся при type === "fail" и "skip". */
   country?: string;
+  streak?: number;
 }
 
-/** Публичный интерфейс хука useGame. */
 export interface UseGameReturn {
-  /** Страна, которую нужно найти на карте в текущем вопросе. */
   currentCountry: Country | undefined;
-  /** Индекс текущего вопроса (с нуля). */
   currentIdx: number;
-  /** Общее количество вопросов в сессии (= длина перемешанного списка). */
   totalRounds: number;
-  /** Количество неверных кликов по текущему вопросу. */
   wrongAttempts: number;
-  /** Накопленные очки за сессию. */
   points: number;
-  /** Карта: идентификатор страны → значение ResultValue. */
+  streak: number;
+  hintUsed: boolean;
   results: Map<string, ResultValue>;
-  /** Активный тост или null, если тост скрыт. */
   feedback: FeedbackState | null;
-  /** true после окончания игры (все вопросы пройдены или нажата кнопка Завершить). */
   isOver: boolean;
-  /** Разбивка результатов по попыткам для экрана статистики. */
   stats: GameStats;
-  /** Обработчик клика по глобусу — принимает нормализованный id из TopoJSON. */
   handleGuess: (clickedId: string | null) => void;
-  /** Пропустить текущий вопрос и пометить страну как пропущенную. */
   handleSkip: () => void;
-  /** Завершить игру досрочно, пометив оставшиеся вопросы как пропущенные. */
   handleFinish: () => void;
-  /** Полный сброс — новая случайная очерёдность стран, все счётчики в ноль. */
+  handleHint: () => void;
   restart: () => void;
 }
 
-/** Создаёт новую перемешанную очередь из полного списка стран. */
-function makeQueue(): Country[] {
-  return shuffle(COUNTRIES);
+function filterCountries(config: GameConfig): Country[] {
+  return COUNTRIES.filter((c) => {
+    if (config.region !== "all" && c.region !== config.region) return false;
+    if (config.difficulty !== "all" && c.difficulty !== config.difficulty) return false;
+    return true;
+  });
 }
 
-/**
- * Возвращает ключ результата в зависимости от числа ошибочных попыток.
- * 0 ошибок → FIRST, 1 → SECOND, 2+ → THIRD.
- */
+function makeQueue(config: GameConfig): Country[] {
+  const pool = filterCountries(config);
+  return shuffle(pool.length > 0 ? pool : COUNTRIES);
+}
+
 function getResultKey(wrongAttempts: number): ResultValue {
   if (wrongAttempts === 0) return RESULT.FIRST;
   if (wrongAttempts === 1) return RESULT.SECOND;
   return RESULT.THIRD;
 }
 
-/**
- * Основной хук игровой логики.
- * Управляет очередью вопросов, попытками, очками, тостами и финальным состоянием.
- * Таймер намеренно вынесен в отдельный хук, чтобы сбрасываться независимо при рестарте.
- *
- * @param onGameEnd - Опциональный колбэк, вызывается однократно при завершении игры.
- */
-export function useGame(onGameEnd?: () => void): UseGameReturn {
-  const [queue, setQueue] = useState<Country[]>(makeQueue);
+export function useGame(onGameEnd?: () => void, config?: GameConfig): UseGameReturn {
+  const effectiveConfig: GameConfig = config ?? {
+    mode: "classic",
+    region: "all",
+    difficulty: "all",
+    countdownSeconds: 120,
+  };
+
+  const [queue, setQueue] = useState<Country[]>(() => makeQueue(effectiveConfig));
   const [currentIdx, setCurrentIdx] = useState(0);
   const [wrongAttempts, setWrongAttempts] = useState(0);
   const [points, setPoints] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [hintUsed, setHintUsed] = useState(false);
   const [results, setResults] = useState<Map<string, ResultValue>>(() => new Map());
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [isOver, setIsOver] = useState(false);
@@ -96,32 +82,27 @@ export function useGame(onGameEnd?: () => void): UseGameReturn {
   const currentIdxRef = useRef(0);
   const queueRef = useRef<Country[]>(queue);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const streakRef = useRef(0);
+  const hintUsedRef = useRef(false);
 
-  useEffect(() => {
-    currentIdxRef.current = currentIdx;
-  }, [currentIdx]);
+  useEffect(() => { currentIdxRef.current = currentIdx; }, [currentIdx]);
+  useEffect(() => { queueRef.current = queue; }, [queue]);
+  useEffect(() => { streakRef.current = streak; }, [streak]);
+  useEffect(() => { hintUsedRef.current = hintUsed; }, [hintUsed]);
 
-  useEffect(() => {
-    queueRef.current = queue;
-  }, [queue]);
-
-  /** Отменяет любой ожидающий таймаут автоперехода или скрытия тоста. */
   const clearFeedbackTimer = useCallback(() => {
     if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
   }, []);
 
-  /** Помечает игру завершённой и вызывает onGameEnd. */
   const endGame = useCallback(() => {
     setIsOver(true);
     onGameEnd?.();
   }, [onGameEnd]);
 
-  /**
-   * Сбрасывает состояние текущего вопроса и переходит к следующему.
-   * Если очередь исчерпана — завершает игру.
-   */
   const advance = useCallback(() => {
     setWrongAttempts(0);
+    setHintUsed(false);
+    hintUsedRef.current = false;
     setFeedback(null);
     setCurrentIdx((prev) => {
       const next = prev + 1;
@@ -134,12 +115,6 @@ export function useGame(onGameEnd?: () => void): UseGameReturn {
     });
   }, [endGame]);
 
-  /**
-   * Обрабатывает клик по стране на глобусе.
-   * Сравнивает clickedId с текущей целевой страной и обновляет попытки/очки/тост.
-   *
-   * @param clickedId - Нормализованный id из TopoJSON (десятичная строка без ведущих нулей).
-   */
   const handleGuess = useCallback(
     (clickedId: string | null) => {
       if (feedback || isOver) return;
@@ -150,16 +125,21 @@ export function useGame(onGameEnd?: () => void): UseGameReturn {
 
       if (clickedId === target.id) {
         const resultKey = getResultKey(wrongAttempts);
-        const earned = POINTS[resultKey];
+        const baseEarned = POINTS[resultKey];
+        const earned = hintUsedRef.current ? Math.max(0, baseEarned - 1) : baseEarned;
+        const newStreak = wrongAttempts === 0 ? streakRef.current + 1 : 0;
 
         setPoints((p) => p + earned);
+        setStreak(newStreak);
+        streakRef.current = newStreak;
         setResults((r) => new Map([...r, [target.id, resultKey]]));
-        setFeedback({ type: "correct", pts: earned });
+        setFeedback({ type: "correct", pts: earned, streak: newStreak });
         feedbackTimer.current = setTimeout(advance, 700);
       } else {
         const newWrong = wrongAttempts + 1;
-
         if (newWrong >= MAX_ATTEMPTS) {
+          setStreak(0);
+          streakRef.current = 0;
           setResults((r) => new Map([...r, [target.id, RESULT.FAILED]]));
           setFeedback({ type: "fail", country: target.name });
           feedbackTimer.current = setTimeout(advance, 1500);
@@ -173,23 +153,17 @@ export function useGame(onGameEnd?: () => void): UseGameReturn {
     [feedback, isOver, wrongAttempts, advance, clearFeedbackTimer],
   );
 
-  /**
-   * Пропускает текущий вопрос: помечает страну как SKIPPED,
-   * показывает тост с названием и переходит к следующему.
-   */
   const handleSkip = useCallback(() => {
     if (feedback || isOver) return;
     clearFeedbackTimer();
     const target = queueRef.current[currentIdxRef.current];
+    setStreak(0);
+    streakRef.current = 0;
     setResults((r) => new Map([...r, [target.id, RESULT.SKIPPED]]));
     setFeedback({ type: "skip", country: target.name });
     feedbackTimer.current = setTimeout(advance, 1000);
   }, [feedback, isOver, advance, clearFeedbackTimer]);
 
-  /**
-   * Досрочно завершает игру.
-   * Все вопросы, начиная с текущего, помечаются как SKIPPED.
-   */
   const handleFinish = useCallback(() => {
     clearFeedbackTimer();
     const idx = currentIdxRef.current;
@@ -204,23 +178,29 @@ export function useGame(onGameEnd?: () => void): UseGameReturn {
     endGame();
   }, [endGame, clearFeedbackTimer]);
 
-  /**
-   * Полный сброс игры: новая перемешанная очередь, все счётчики в ноль,
-   * синхронизация внутренних refs.
-   */
+  const handleHint = useCallback(() => {
+    if (feedback || isOver || hintUsedRef.current) return;
+    setHintUsed(true);
+    hintUsedRef.current = true;
+  }, [feedback, isOver]);
+
   const restart = useCallback(() => {
     clearFeedbackTimer();
-    const newQueue = makeQueue();
+    const newQueue = makeQueue(effectiveConfig);
     currentIdxRef.current = 0;
     queueRef.current = newQueue;
+    streakRef.current = 0;
+    hintUsedRef.current = false;
     setQueue(newQueue);
     setCurrentIdx(0);
     setWrongAttempts(0);
     setPoints(0);
+    setStreak(0);
+    setHintUsed(false);
     setResults(new Map());
     setFeedback(null);
     setIsOver(false);
-  }, [clearFeedbackTimer]);
+  }, [clearFeedbackTimer, effectiveConfig]);
 
   const totalRounds = queue.length;
   const currentCountry = queue[currentIdx];
@@ -239,6 +219,8 @@ export function useGame(onGameEnd?: () => void): UseGameReturn {
     totalRounds,
     wrongAttempts,
     points,
+    streak,
+    hintUsed,
     results,
     feedback,
     isOver,
@@ -246,6 +228,7 @@ export function useGame(onGameEnd?: () => void): UseGameReturn {
     handleGuess,
     handleSkip,
     handleFinish,
+    handleHint,
     restart,
   };
 }

@@ -1,54 +1,66 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
-/** Публичный интерфейс хука useTimer. */
-export interface UseTimerReturn {
-  /** Прошедшее время в секундах с момента старта или последнего сброса. */
+interface UseTimerOptions {
+  mode?: "up" | "down";
+  initialSeconds?: number;
+  onExpire?: () => void;
+}
+
+interface UseTimerReturn {
   elapsed: number;
-  /** Останавливает таймер, не сбрасывая elapsed. */
+  isExpired: boolean;
   stop: () => void;
-  /** Сбрасывает elapsed в 0 и немедленно перезапускает отсчёт. */
   reset: () => void;
 }
 
-/**
- * Секундомер, который запускается автоматически при монтировании компонента.
- * Обновляет `elapsed` раз в секунду через `setInterval`.
- *
- * @returns Объект с текущим временем и методами stop/reset.
- */
-export function useTimer(): UseTimerReturn {
-  const [elapsed, setElapsed] = useState(0);
-  const startRef = useRef<number | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const startTick = useCallback(() => {
-    startRef.current = Date.now();
-    intervalRef.current = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - (startRef.current ?? Date.now())) / 1000));
-    }, 1000);
-  }, []);
+export function useTimer({
+  mode = "up",
+  initialSeconds = 120,
+  onExpire,
+}: UseTimerOptions = {}): UseTimerReturn {
+  const [elapsed, setElapsed] = useState(mode === "down" ? initialSeconds : 0);
+  const [isExpired, setIsExpired] = useState(false);
+  const runningRef = useRef(true);
+  const onExpireRef = useRef(onExpire);
 
   useEffect(() => {
-    startTick();
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [startTick]);
+    onExpireRef.current = onExpire;
+  }, [onExpire]);
 
-  /** Останавливает интервал, не изменяя elapsed. */
-  const stop = useCallback(() => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-  }, []);
+  useEffect(() => {
+    runningRef.current = true;
+    setIsExpired(false);
+    setElapsed(mode === "down" ? initialSeconds : 0);
 
-  /** Очищает интервал, сбрасывает elapsed в 0 и перезапускает счёт. */
-  const reset = useCallback(() => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    setElapsed(0);
-    startRef.current = Date.now();
-    intervalRef.current = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - (startRef.current ?? Date.now())) / 1000));
+    const id = setInterval(() => {
+      if (!runningRef.current) return;
+      setElapsed((prev) => {
+        if (mode === "down") {
+          const next = prev - 1;
+          if (next <= 0) {
+            runningRef.current = false;
+            setIsExpired(true);
+            onExpireRef.current?.();
+            return 0;
+          }
+          return next;
+        }
+        return prev + 1;
+      });
     }, 1000);
+
+    return () => clearInterval(id);
+  }, [mode, initialSeconds]);
+
+  const stop = useCallback(() => {
+    runningRef.current = false;
   }, []);
 
-  return { elapsed, stop, reset };
+  const reset = useCallback(() => {
+    runningRef.current = true;
+    setIsExpired(false);
+    setElapsed(mode === "down" ? initialSeconds : 0);
+  }, [mode, initialSeconds]);
+
+  return { elapsed, isExpired, stop, reset };
 }

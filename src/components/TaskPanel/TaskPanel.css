@@ -90,6 +90,36 @@
   background: rgba(255, 255, 255, 0.04);
 }
 
+.task-panel__flag {
+  font-size: clamp(3rem, 12vw, 5rem);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.hint-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 200, 0, 0.3);
+  color: rgba(255, 200, 0, 0.8);
+  font-size: 0.78rem;
+  padding: 5px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.hint-btn:hover:not(:disabled) {
+  border-color: rgba(255, 200, 0, 0.6);
+  color: #ffd700;
+  background: rgba(255, 200, 0, 0.08);
+}
+
+.hint-btn--used,
+.hint-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 @media (max-width: 600px) {
   .task-panel {
     padding: 10px 14px 8px;

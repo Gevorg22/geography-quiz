@@ -13,10 +13,9 @@ type WorldTopology = Topology<{ countries: GeometryCollection }>;
 
 /** Внешний API глобуса, доступный через ref из родительского компонента. */
 export interface GlobeHandle {
-  /** Приближает глобус на один шаг. */
   zoomIn: () => void;
-  /** Отдаляет глобус на один шаг. */
   zoomOut: () => void;
+  rotateToCountry: (countryId: string) => void;
 }
 
 interface GlobeProps {
@@ -137,13 +136,43 @@ function Globe({ onGuess, results, ref }: GlobeProps) {
     sel.selectAll("path").attr("d", (d) => pathGen(d as GeoJSON.Feature));
   }, []);
 
+  const rotateToCountry = useCallback(
+    (countryId: string) => {
+      const world = worldRef.current;
+      const proj = projRef.current;
+      if (!world || !proj) return;
+
+      const feature = topojson
+        .feature(world, world.objects.countries)
+        .features.find((f) => String(parseInt(String(f.id), 10)) === countryId);
+      if (!feature) return;
+
+      const centroid = d3.geoCentroid(feature);
+      const startRot = proj.rotate() as [number, number, number];
+      const targetRot: [number, number, number] = [-centroid[0], -centroid[1], 0];
+      const interp = d3.interpolate(startRot, targetRot);
+
+      const timer = d3.timer((elapsed) => {
+        const t = Math.min(1, elapsed / 900);
+        const eased = d3.easeCubicInOut(t);
+        const rot = interp(eased) as [number, number, number];
+        rotRef.current = rot;
+        proj.rotate(rot);
+        redraw();
+        if (t >= 1) timer.stop();
+      });
+    },
+    [redraw],
+  );
+
   useImperativeHandle(
     ref,
     () => ({
       zoomIn: () => applyZoom((projRef.current?.scale() ?? 300) * ZOOM.factor),
       zoomOut: () => applyZoom((projRef.current?.scale() ?? 300) / ZOOM.factor),
+      rotateToCountry,
     }),
-    [applyZoom],
+    [applyZoom, rotateToCountry],
   );
 
   const initGlobe = useCallback(() => {

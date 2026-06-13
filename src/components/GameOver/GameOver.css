@@ -126,8 +126,103 @@
 .game-over__rating {
   font-size: 1.25rem;
   font-weight: 600;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   color: #e8f4f8;
+}
+
+.game-over__mode {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #4fc3f7;
+  margin-bottom: 4px;
+}
+
+.game-over__streak {
+  font-size: 0.9rem;
+  color: #ffb347;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.game-over__records {
+  background: rgba(255 255 255 / 0.04);
+  border: 1px solid rgba(255 255 255 / 0.08);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.game-over__records-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: rgba(255 255 255 / 0.5);
+  margin-bottom: 8px;
+}
+
+.game-over__records-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.game-over__record-row {
+  display: grid;
+  grid-template-columns: 1.5rem 1fr auto;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.82rem;
+}
+
+.game-over__record-rank {
+  color: #f0a500;
+  font-weight: 700;
+}
+
+.game-over__record-pts {
+  font-weight: 600;
+  color: #fff;
+}
+
+.game-over__record-meta {
+  color: rgba(255 255 255 / 0.45);
+  font-size: 0.75rem;
+}
+
+.game-over__fact {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: rgba(79, 195, 247, 0.07);
+  border: 1px solid rgba(79, 195, 247, 0.18);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.game-over__fact-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.game-over__fact-text {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: rgba(255 255 255 / 0.7);
+  margin: 0;
+}
+
+.game-over__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
 }
 
 .game-over__restart-btn {
@@ -152,6 +247,24 @@
 
 .game-over__restart-btn:active {
   transform: scale(0.97);
+}
+
+.game-over__setup-btn {
+  background: transparent;
+  border: 1px solid rgba(255 255 255 / 0.2);
+  color: rgba(255 255 255 / 0.7);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.game-over__setup-btn:hover {
+  background: rgba(255 255 255 / 0.07);
+  border-color: rgba(255 255 255 / 0.4);
+  color: #fff;
 }
 
 @media (max-width: 600px) {

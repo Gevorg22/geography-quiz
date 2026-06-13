@@ -1,25 +1,21 @@
 import { formatTime } from "../../utils/time";
+import type { GameMode } from "../../types/game";
+import { MODE_ICONS } from "../../types/game";
 import "./GameHeader.css";
 
 interface GameHeaderProps {
-  /** Индекс текущего вопроса (с нуля). */
   currentIdx: number;
-  /** Общее количество вопросов в очереди. */
   totalRounds: number;
-  /** Накопленные очки за сессию. */
   points: number;
-  /** Прошедшее время в секундах (из useTimer). */
   elapsed: number;
-  /** Скрывает прогресс-бар и кнопку завершения после окончания игры. */
   isOver: boolean;
-  /** Колбэк при нажатии кнопки «Завершить». */
   onFinish: () => void;
+  streak?: number;
+  mode?: GameMode;
+  isCountdown?: boolean;
+  isTimerExpired?: boolean;
 }
 
-/**
- * Закреплённая шапка, отображаемая во время активной сессии.
- * Содержит логотип, прогресс-бар, таймер, очки и кнопку завершения.
- */
 export default function GameHeader({
   currentIdx,
   totalRounds,
@@ -27,10 +23,22 @@ export default function GameHeader({
   elapsed,
   isOver,
   onFinish,
+  streak = 0,
+  mode = "classic",
+  isCountdown = false,
+  isTimerExpired = false,
 }: GameHeaderProps) {
+  const timerLabel = isCountdown
+    ? `⏳ ${formatTime(elapsed)}`
+    : `⏱ ${formatTime(elapsed)}`;
+
+  const timerDanger = isCountdown && elapsed <= 15 && !isTimerExpired;
+
   return (
     <header className="game-header">
-      <div className="game-header__logo">🌍 Geography Quiz</div>
+      <div className="game-header__logo">
+        {MODE_ICONS[mode]} Geography Quiz
+      </div>
 
       <div className="game-header__center">
         {!isOver && (
@@ -52,8 +60,15 @@ export default function GameHeader({
       </div>
 
       <div className="game-header__right">
-        <span className="game-header__badge">⏱ {formatTime(elapsed)}</span>
+        <span className={`game-header__badge${timerDanger ? " game-header__badge--danger" : ""}`}>
+          {timerLabel}
+        </span>
         <span className="game-header__badge">⭐ {points}</span>
+        {streak >= 3 && (
+          <span className="game-header__badge game-header__badge--streak">
+            🔥 {streak}
+          </span>
+        )}
         {!isOver && (
           <button className="game-header__finish-btn" onClick={onFinish}>
             Завершить

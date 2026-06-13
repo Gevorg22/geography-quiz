@@ -90,6 +90,24 @@
   color: #e63946;
 }
 
+.game-header__badge--streak {
+  background: rgba(255, 140, 0, 0.18);
+  border-color: rgba(255, 140, 0, 0.45);
+  color: #ffb347;
+}
+
+.game-header__badge--danger {
+  background: rgba(230, 57, 70, 0.18);
+  border-color: rgba(230, 57, 70, 0.5);
+  color: #e63946;
+  animation: pulse-danger 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-danger {
+  from { opacity: 1; }
+  to { opacity: 0.6; }
+}
+
 @media (max-width: 600px) {
   .game-header {
     padding: 10px 14px;

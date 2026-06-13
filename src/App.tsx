@@ -1,28 +1,14 @@
-/**
- * @file Корневой компонент приложения.
- *
- * Компонует все хуки и компоненты в единый игровой процесс:
- *
- * ```
- * App
- * ├── GameHeader    — прогресс-бар, таймер, очки, кнопка завершения
- * ├── TaskPanel     — название страны, точки попыток, пропуск
- * ├── Globe         — интерактивный D3-глобус
- * ├── ZoomControls  — кнопки +/− привязанные к ref-API глобуса
- * ├── FeedbackToast — анимированные уведомления об исходе хода
- * └── GameOver      — экран итоговой статистики
- * ```
- *
- * Владение состоянием:
- * - Игровая логика — в useGame
- * - Таймер — в useTimer (отдельно, чтобы сбрасываться независимо при рестарте)
- * - Производные значения totalPoints/maxPoints вычисляются здесь, а не в хуках
- */
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useGame } from "./hooks/useGame";
 import { useTimer } from "./hooks/useTimer";
-import { POINTS } from "./constants/game";
+import { useHistory } from "./hooks/useHistory";
+import { POINTS, RESULT } from "./constants/game";
+import type { GameConfig } from "./types/game";
+import { DEFAULT_CONFIG } from "./types/game";
+import { COUNTRIES } from "./data/countries";
+import { sounds } from "./utils/sounds";
+import { haptic } from "./utils/haptic";
 import Globe from "./components/Globe/Globe";
 import type { GlobeHandle } from "./components/Globe/Globe";
 import GameHeader from "./components/GameHeader/GameHeader";
@@ -30,13 +16,23 @@ import TaskPanel from "./components/TaskPanel/TaskPanel";
 import ZoomControls from "./components/ZoomControls/ZoomControls";
 import FeedbackToast from "./components/FeedbackToast/FeedbackToast";
 import GameOver from "./components/GameOver/GameOver";
+import GameSetup from "./components/GameSetup/GameSetup";
 import "./App.css";
+
+type Phase = "setup" | "game";
 
 export default function App() {
   const globeRef = useRef<GlobeHandle>(null);
-  const { elapsed, stop: stopTimer, reset: resetTimer } = useTimer();
+  const [phase, setPhase] = useState<Phase>("setup");
+  const [config, setConfig] = useState<GameConfig>(DEFAULT_CONFIG);
 
-  const handleGameEnd = useCallback(() => stopTimer(), [stopTimer]);
+  const { topRecords, topWeakSpots, totalGames, saveRecord, clearHistory } = useHistory();
+
+  const isCountdown = config.mode === "countdown";
+
+  const stopTimerRef = useRef<(() => void) | null>(null);
+
+  const handleGameEnd = useCallback(() => stopTimerRef.current?.(), []);
 
   const {
     currentCountry,
@@ -44,6 +40,8 @@ export default function App() {
     totalRounds,
     wrongAttempts,
     points,
+    streak,
+    hintUsed,
     results,
     feedback,
     isOver,
@@ -51,13 +49,112 @@ export default function App() {
     handleGuess,
     handleSkip,
     handleFinish,
+    handleHint,
     restart,
-  } = useGame(handleGameEnd);
+  } = useGame(handleGameEnd, config);
+
+  const { elapsed, stop: stopTimer, reset: resetTimer } = useTimer({
+    mode: isCountdown ? "down" : "up",
+    initialSeconds: config.countdownSeconds,
+    onExpire: isCountdown ? handleFinish : undefined,
+  });
+
+  useEffect(() => {
+    stopTimerRef.current = stopTimer;
+  }, [stopTimer]);
+
+  useEffect(() => {
+    if (isOver) {
+      const failedIds = [...results.entries()]
+        .filter(([, v]) => v === RESULT.FAILED || v === RESULT.SKIPPED)
+        .map(([id]) => {
+          const c = COUNTRIES.find((x) => x.id === id);
+          return c ? { id: c.id, name: c.name } : null;
+        })
+        .filter(Boolean) as { id: string; name: string }[];
+
+      const maxPoints = totalRounds * POINTS.first;
+      saveRecord(
+        {
+          mode: config.mode,
+          region: config.region,
+          difficulty: config.difficulty,
+          totalPoints: points,
+          maxPoints,
+          elapsed,
+          stats,
+          streak,
+        },
+        failedIds,
+      );
+    }
+  }, [isOver]);
+
+  const handleHintWithGlobe = useCallback(() => {
+    handleHint();
+    if (currentCountry) {
+      globeRef.current?.rotateToCountry(currentCountry.id);
+      sounds.hint();
+      haptic.hint();
+    }
+  }, [handleHint, currentCountry]);
+
+  const wrappedGuess = useCallback(
+    (id: string | null) => {
+      if (!feedback && !isOver) {
+        handleGuess(id);
+      }
+    },
+    [handleGuess, feedback, isOver],
+  );
+
+  useEffect(() => {
+    if (!feedback) return;
+    if (feedback.type === "correct") {
+      if (feedback.streak && feedback.streak >= 3) {
+        sounds.streak();
+        haptic.correct();
+      } else {
+        sounds.correct();
+        haptic.correct();
+      }
+    } else if (feedback.type === "wrong") {
+      sounds.wrong();
+      haptic.wrong();
+    } else if (feedback.type === "fail") {
+      sounds.fail();
+      haptic.fail();
+    } else if (feedback.type === "skip") {
+      sounds.skip();
+      haptic.skip();
+    }
+  }, [feedback]);
+
+  const handleStart = useCallback((cfg: GameConfig) => {
+    setConfig(cfg);
+    setPhase("game");
+  }, []);
 
   const handleRestart = useCallback(() => {
     restart();
     resetTimer();
   }, [restart, resetTimer]);
+
+  const handleSetup = useCallback(() => {
+    setPhase("setup");
+  }, []);
+
+  if (phase === "setup") {
+    return (
+      <GameSetup
+        onStart={handleStart}
+        topRecords={topRecords}
+        topWeakSpots={topWeakSpots}
+        totalGames={totalGames}
+        onClearHistory={clearHistory}
+      />
+    );
+  }
 
   const totalPoints =
     stats.firstCount * POINTS.first +
@@ -65,6 +162,8 @@ export default function App() {
     stats.thirdCount * POINTS.third;
 
   const maxPoints = totalRounds * POINTS.first;
+
+  const randomFact = currentCountry?.fact ?? undefined;
 
   return (
     <div className="app">
@@ -75,15 +174,26 @@ export default function App() {
         elapsed={elapsed}
         isOver={isOver}
         onFinish={handleFinish}
+        streak={streak}
+        mode={config.mode}
+        isCountdown={isCountdown}
+        isTimerExpired={isOver && isCountdown}
       />
 
       <main className="app__main">
         {!isOver ? (
           <>
-            <TaskPanel country={currentCountry} wrongAttempts={wrongAttempts} onSkip={handleSkip} />
+            <TaskPanel
+              country={currentCountry}
+              wrongAttempts={wrongAttempts}
+              onSkip={handleSkip}
+              mode={config.mode}
+              hintUsed={hintUsed}
+              onHint={handleHintWithGlobe}
+            />
 
             <div className="app__globe-area">
-              <Globe ref={globeRef} onGuess={handleGuess} results={results} />
+              <Globe ref={globeRef} onGuess={wrappedGuess} results={results} />
               <ZoomControls
                 onZoomIn={() => globeRef.current?.zoomIn()}
                 onZoomOut={() => globeRef.current?.zoomOut()}
@@ -106,6 +216,11 @@ export default function App() {
             maxPoints={maxPoints}
             elapsed={elapsed}
             onRestart={handleRestart}
+            onSetup={handleSetup}
+            streak={streak}
+            fact={randomFact}
+            topRecords={topRecords}
+            mode={config.mode}
           />
         )}
       </main>
