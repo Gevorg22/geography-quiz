@@ -63,31 +63,39 @@ export default function App() {
     stopTimerRef.current = stopTimer;
   }, [stopTimer]);
 
-  useEffect(() => {
-    if (isOver) {
-      const failedIds = [...results.entries()]
-        .filter(([, v]) => v === RESULT.FAILED || v === RESULT.SKIPPED)
-        .map(([id]) => {
-          const c = COUNTRIES.find((x) => x.id === id);
-          return c ? { id: c.id, name: c.name } : null;
-        })
-        .filter(Boolean) as { id: string; name: string }[];
+  const saveRecordRef = useRef(saveRecord);
+  useEffect(() => { saveRecordRef.current = saveRecord; }, [saveRecord]);
 
-      const maxPoints = totalRounds * POINTS.first;
-      saveRecord(
-        {
-          mode: config.mode,
-          region: config.region,
-          difficulty: config.difficulty,
-          totalPoints: points,
-          maxPoints,
-          elapsed,
-          stats,
-          streak,
-        },
-        failedIds,
-      );
-    }
+  const gameSnapshotRef = useRef({ results, totalRounds, config, points, elapsed, stats, streak });
+  useEffect(() => {
+    gameSnapshotRef.current = { results, totalRounds, config, points, elapsed, stats, streak };
+  });
+
+  useEffect(() => {
+    if (!isOver) return;
+    const { results: r, totalRounds: tr, config: cfg, points: pts, elapsed: el, stats: st, streak: sk } = gameSnapshotRef.current;
+    const failedIds = [...r.entries()]
+      .filter(([, v]) => v === RESULT.FAILED || v === RESULT.SKIPPED)
+      .map(([id]) => {
+        const c = COUNTRIES.find((x) => x.id === id);
+        return c ? { id: c.id, name: c.name } : null;
+      })
+      .filter(Boolean) as { id: string; name: string }[];
+
+    const maxPoints = tr * POINTS.first;
+    saveRecordRef.current(
+      {
+        mode: cfg.mode,
+        region: cfg.region,
+        difficulty: cfg.difficulty,
+        totalPoints: pts,
+        maxPoints,
+        elapsed: el,
+        stats: st,
+        streak: sk,
+      },
+      failedIds,
+    );
   }, [isOver]);
 
   const handleHintWithGlobe = useCallback(() => {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type { Country } from "../data/countries";
 import { COUNTRIES } from "../data/countries";
 import { shuffle } from "../utils/array";
@@ -62,12 +62,16 @@ function getResultKey(wrongAttempts: number): ResultValue {
 }
 
 export function useGame(onGameEnd?: () => void, config?: GameConfig): UseGameReturn {
-  const effectiveConfig: GameConfig = config ?? {
-    mode: "classic",
-    region: "all",
-    difficulty: "all",
-    countdownSeconds: 120,
-  };
+  const effectiveConfig: GameConfig = useMemo(
+    () =>
+      config ?? {
+        mode: "classic",
+        region: "all",
+        difficulty: "all",
+        countdownSeconds: 120,
+      },
+    [config],
+  );
 
   const [queue, setQueue] = useState<Country[]>(() => makeQueue(effectiveConfig));
   const [currentIdx, setCurrentIdx] = useState(0);
