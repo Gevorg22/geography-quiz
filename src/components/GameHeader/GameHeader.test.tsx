@@ -8,7 +8,6 @@ describe("GameHeader", () => {
     currentIdx: 0,
     totalRounds: 10,
     points: 0,
-    elapsed: 0,
     isOver: false,
     onFinish: vi.fn(),
   };
@@ -40,11 +39,6 @@ describe("GameHeader", () => {
     expect(bar).toHaveAttribute("aria-valuemax", "10");
   });
 
-  it("отображает отформатированное время", () => {
-    render(<GameHeader {...defaults} elapsed={65} />);
-    expect(screen.getByText(/01:05/)).toBeInTheDocument();
-  });
-
   it("отображает накопленные очки", () => {
     render(<GameHeader {...defaults} points={7} />);
     expect(screen.getByText(/7/)).toBeInTheDocument();
@@ -67,8 +61,13 @@ describe("GameHeader", () => {
     expect(onFinish).toHaveBeenCalledOnce();
   });
 
-  it("показывает 00:00 при elapsed = 0", () => {
-    render(<GameHeader {...defaults} elapsed={0} />);
-    expect(screen.getByText(/00:00/)).toBeInTheDocument();
+  it("показывает бейдж серии при streak >= 3", () => {
+    render(<GameHeader {...defaults} streak={5} />);
+    expect(screen.getByText(/🔥/)).toBeInTheDocument();
+  });
+
+  it("не показывает бейдж серии при streak < 3", () => {
+    render(<GameHeader {...defaults} streak={2} />);
+    expect(screen.queryByText(/🔥/)).not.toBeInTheDocument();
   });
 });

@@ -9,7 +9,6 @@ import {
   MODE_ICONS,
 } from "../../types/game";
 import type { GameRecord } from "../../hooks/useHistory";
-import { formatTime } from "../../utils/time";
 import { COUNTRIES } from "../../data/countries";
 import "./GameSetup.css";
 
@@ -24,7 +23,6 @@ interface GameSetupProps {
 const MODES = Object.keys(MODE_LABELS) as GameConfig["mode"][];
 const REGIONS = Object.keys(REGION_LABELS) as (GameConfig["region"])[];
 const DIFFICULTIES = Object.keys(DIFFICULTY_LABELS) as (GameConfig["difficulty"])[];
-const COUNTDOWN_OPTIONS = [60, 90, 120, 180, 300];
 
 function countForConfig(config: GameConfig): number {
   return COUNTRIES.filter((c) => {
@@ -69,23 +67,6 @@ export default function GameSetup({
             ))}
           </div>
         </section>
-
-        {config.mode === "countdown" && (
-          <section className="setup__section">
-            <p className="setup__label">Время</p>
-            <div className="setup__chips">
-              {COUNTDOWN_OPTIONS.map((s) => (
-                <button
-                  key={s}
-                  className={`chip ${config.countdownSeconds === s ? "chip--active" : ""}`}
-                  onClick={() => setConfig((c) => ({ ...c, countdownSeconds: s }))}
-                >
-                  {formatTime(s)}
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
 
         <section className="setup__section">
           <p className="setup__label">Регион</p>
@@ -144,7 +125,7 @@ export default function GameSetup({
                   <span className="setup__record-rank">#{i + 1}</span>
                   <span className="setup__record-pts">{r.totalPoints} оч.</span>
                   <span className="setup__record-meta">
-                    {MODE_LABELS[r.mode]} · {formatTime(r.elapsed)}
+                    {MODE_LABELS[r.mode]}
                   </span>
                 </li>
               ))}

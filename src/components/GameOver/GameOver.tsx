@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { formatTime } from "../../utils/time";
 import { POINTS } from "../../constants/game";
 import type { GameStats } from "../../hooks/useGame";
 import type { GameRecord } from "../../hooks/useHistory";
@@ -35,7 +34,6 @@ interface GameOverProps {
   stats: GameStats;
   totalPoints: number;
   maxPoints: number;
-  elapsed: number;
   onRestart: () => void;
   onSetup?: () => void;
   streak?: number;
@@ -48,7 +46,6 @@ export default function GameOver({
   stats,
   totalPoints,
   maxPoints,
-  elapsed,
   onRestart,
   onSetup,
   streak = 0,
@@ -67,7 +64,6 @@ export default function GameOver({
         <div className="game-over__icon">🌍</div>
         <h2 className="game-over__title">Игра завершена!</h2>
         <p className="game-over__mode">{MODE_LABELS[mode]}</p>
-        <p className="game-over__time">⏱ {formatTime(elapsed)}</p>
         {streak >= 3 && (
           <p className="game-over__streak">🔥 Лучшая серия: {streak}</p>
         )}
@@ -108,7 +104,7 @@ export default function GameOver({
                 <li key={r.id} className="game-over__record-row">
                   <span className="game-over__record-rank">#{i + 1}</span>
                   <span className="game-over__record-pts">{r.totalPoints} оч.</span>
-                  <span className="game-over__record-meta">{formatTime(r.elapsed)}</span>
+                  <span className="game-over__record-meta">{MODE_LABELS[r.mode]}</span>
                 </li>
               ))}
             </ol>

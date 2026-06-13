@@ -14,7 +14,6 @@ export interface GameRecord {
   difficulty: GameConfig["difficulty"];
   totalPoints: number;
   maxPoints: number;
-  elapsed: number;
   stats: GameStats;
   streak: number;
 }

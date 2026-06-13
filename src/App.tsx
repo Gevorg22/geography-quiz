@@ -1,7 +1,6 @@
 import { useRef, useCallback, useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useGame } from "./hooks/useGame";
-import { useTimer } from "./hooks/useTimer";
 import { useHistory } from "./hooks/useHistory";
 import { POINTS, RESULT } from "./constants/game";
 import type { GameConfig } from "./types/game";
@@ -28,12 +27,6 @@ export default function App() {
 
   const { topRecords, topWeakSpots, totalGames, saveRecord, clearHistory } = useHistory();
 
-  const isCountdown = config.mode === "countdown";
-
-  const stopTimerRef = useRef<(() => void) | null>(null);
-
-  const handleGameEnd = useCallback(() => stopTimerRef.current?.(), []);
-
   const {
     currentCountry,
     currentIdx,
@@ -51,29 +44,19 @@ export default function App() {
     handleFinish,
     handleHint,
     restart,
-  } = useGame(handleGameEnd, config);
-
-  const { elapsed, stop: stopTimer, reset: resetTimer } = useTimer({
-    mode: isCountdown ? "down" : "up",
-    initialSeconds: config.countdownSeconds,
-    onExpire: isCountdown ? handleFinish : undefined,
-  });
-
-  useEffect(() => {
-    stopTimerRef.current = stopTimer;
-  }, [stopTimer]);
+  } = useGame(undefined, config);
 
   const saveRecordRef = useRef(saveRecord);
   useEffect(() => { saveRecordRef.current = saveRecord; }, [saveRecord]);
 
-  const gameSnapshotRef = useRef({ results, totalRounds, config, points, elapsed, stats, streak });
+  const gameSnapshotRef = useRef({ results, totalRounds, config, points, stats, streak });
   useEffect(() => {
-    gameSnapshotRef.current = { results, totalRounds, config, points, elapsed, stats, streak };
+    gameSnapshotRef.current = { results, totalRounds, config, points, stats, streak };
   });
 
   useEffect(() => {
     if (!isOver) return;
-    const { results: r, totalRounds: tr, config: cfg, points: pts, elapsed: el, stats: st, streak: sk } = gameSnapshotRef.current;
+    const { results: r, totalRounds: tr, config: cfg, points: pts, stats: st, streak: sk } = gameSnapshotRef.current;
     const failedIds = [...r.entries()]
       .filter(([, v]) => v === RESULT.FAILED || v === RESULT.SKIPPED)
       .map(([id]) => {
@@ -90,7 +73,6 @@ export default function App() {
         difficulty: cfg.difficulty,
         totalPoints: pts,
         maxPoints,
-        elapsed: el,
         stats: st,
         streak: sk,
       },
@@ -145,8 +127,7 @@ export default function App() {
 
   const handleRestart = useCallback(() => {
     restart();
-    resetTimer();
-  }, [restart, resetTimer]);
+  }, [restart]);
 
   const handleSetup = useCallback(() => {
     setPhase("setup");
@@ -179,13 +160,10 @@ export default function App() {
         currentIdx={currentIdx}
         totalRounds={totalRounds}
         points={points}
-        elapsed={elapsed}
         isOver={isOver}
         onFinish={handleFinish}
         streak={streak}
         mode={config.mode}
-        isCountdown={isCountdown}
-        isTimerExpired={isOver && isCountdown}
       />
 
       <main className="app__main">
@@ -222,7 +200,6 @@ export default function App() {
             stats={stats}
             totalPoints={totalPoints}
             maxPoints={maxPoints}
-            elapsed={elapsed}
             onRestart={handleRestart}
             onSetup={handleSetup}
             streak={streak}
