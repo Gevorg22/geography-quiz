@@ -16,7 +16,16 @@ vi.mock("framer-motion", () => {
   };
 });
 
-const country = { id: "250", name: "Франция", en: "France" };
+const country = {
+  id: "250",
+  name: "Франция",
+  en: "France",
+  iso2: "FR",
+  capital: "Париж",
+  region: "eu" as const,
+  difficulty: "easy" as const,
+  fact: "Родина Эйфелевой башни",
+};
 
 describe("TaskPanel", () => {
   it("отображает название страны на русском", () => {
