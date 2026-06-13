@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import type { FeedbackState } from "../../hooks/useGame";
+import { useVisualViewport } from "../../hooks/useVisualViewport";
 import "./FeedbackToast.css";
 
 const MESSAGES: Record<FeedbackState["type"], (f: FeedbackState) => string> = {
@@ -10,50 +10,6 @@ const MESSAGES: Record<FeedbackState["type"], (f: FeedbackState) => string> = {
   fail: ({ country }) => `✗ Не угадали — ${country}`,
   skip: ({ country }) => `⏭ Пропущено — ${country}`,
 };
-
-interface VisualViewportSnapshot {
-  offsetLeft: number;
-  offsetTop: number;
-  width: number;
-  height: number;
-  scale: number;
-}
-
-function getSnapshot(): VisualViewportSnapshot {
-  const vv = window.visualViewport;
-  return {
-    offsetLeft: vv?.offsetLeft ?? 0,
-    offsetTop: vv?.offsetTop ?? 0,
-    width: vv?.width ?? window.innerWidth,
-    height: vv?.height ?? window.innerHeight,
-    scale: vv?.scale ?? 1,
-  };
-}
-
-function useVisualViewport(): VisualViewportSnapshot {
-  const [vp, setVp] = useState<VisualViewportSnapshot>(getSnapshot);
-
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const update = () =>
-      setVp({
-        offsetLeft: vv.offsetLeft,
-        offsetTop: vv.offsetTop,
-        width: vv.width,
-        height: vv.height,
-        scale: vv.scale,
-      });
-    vv.addEventListener("resize", update);
-    vv.addEventListener("scroll", update);
-    return () => {
-      vv.removeEventListener("resize", update);
-      vv.removeEventListener("scroll", update);
-    };
-  }, []);
-
-  return vp;
-}
 
 const BOTTOM_OFFSET = 44;
 

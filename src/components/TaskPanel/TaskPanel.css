@@ -1,7 +1,15 @@
 .task-panel {
+  position: fixed;
+  z-index: 15;
+  background: rgba(8, 12, 28, 0.80);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(79, 195, 247, 0.1);
   text-align: center;
-  padding: 14px 20px 10px;
-  flex-shrink: 0;
+  padding: 14px 24px 10px;
+  width: max-content;
+  max-width: 100vw;
+  box-sizing: border-box;
 }
 
 .task-panel__label {

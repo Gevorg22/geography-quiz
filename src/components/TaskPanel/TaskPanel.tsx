@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import type { Country } from "../../data/countries";
 import { MAX_ATTEMPTS } from "../../constants/game";
+import { useVisualViewport } from "../../hooks/useVisualViewport";
 import "./TaskPanel.css";
 
 interface TaskPanelProps {
@@ -12,14 +13,28 @@ interface TaskPanelProps {
   onSkip: () => void;
 }
 
+const HEADER_HEIGHT = 60;
+
 /**
  * Панель с текущим вопросом.
  * Отображает название страны, точки попыток и кнопку пропуска.
- * Название страны анимируется при переходе к следующему вопросу.
+ * Привязана к верхнему краю visual viewport — остаётся видимой при pinch-zoom.
  */
 export default function TaskPanel({ country, wrongAttempts, onSkip }: TaskPanelProps) {
+  const { offsetLeft, offsetTop, width, scale } = useVisualViewport();
+  const inv = 1 / scale;
+
   return (
-    <div className="task-panel">
+    <motion.div
+      className="task-panel"
+      style={{
+        left: offsetLeft + width / 2,
+        top: offsetTop + HEADER_HEIGHT * inv,
+        x: "-50%",
+        scale: inv,
+        transformOrigin: "top center",
+      }}
+    >
       <p className="task-panel__label">Найдите на карте</p>
 
       <AnimatePresence mode="wait">
@@ -67,6 +82,6 @@ export default function TaskPanel({ country, wrongAttempts, onSkip }: TaskPanelP
           Не знаю / Пропустить
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 }
