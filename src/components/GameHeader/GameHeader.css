@@ -1,4 +1,5 @@
 .game-header {
+  position: fixed;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -7,8 +8,8 @@
   backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(79, 195, 247, 0.15);
   z-index: 10;
-  flex-shrink: 0;
   gap: 12px;
+  box-sizing: border-box;
 }
 
 .game-header__logo {

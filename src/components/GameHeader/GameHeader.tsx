@@ -1,3 +1,4 @@
+import { useVisualViewport } from "../../hooks/useVisualViewport";
 import type { GameMode } from "../../types/game";
 import { MODE_ICONS } from "../../types/game";
 import "./GameHeader.css";
@@ -21,8 +22,17 @@ export default function GameHeader({
   streak = 0,
   mode = "classic",
 }: GameHeaderProps) {
+  const { offsetLeft, offsetTop, width } = useVisualViewport();
+
   return (
-    <header className="game-header">
+    <header
+      className="game-header"
+      style={{
+        left: offsetLeft,
+        top: offsetTop,
+        width: width,
+      }}
+    >
       <div className="game-header__logo">
         {MODE_ICONS[mode]} Geography Quiz
       </div>

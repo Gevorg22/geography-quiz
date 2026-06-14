@@ -3,7 +3,7 @@ import type { Ref } from "react";
 import * as d3 from "d3";
 import * as topojson from "topojson-client";
 import type { Topology, GeometryCollection } from "topojson-specification";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { GLOBE_COLORS, ZOOM } from "../../constants/game";
 import type { ResultValue } from "../../constants/game";
 import "./Globe.css";
@@ -76,6 +76,7 @@ function Globe({ onGuess, results, ref }: GlobeProps) {
   const onGuessRef = useRef(onGuess);
 
   const [size, setSize] = useState<Size>({ w: 600, h: 600 });
+  const [ripple, setRipple] = useState<{ cx: number; cy: number; key: number } | null>(null);
 
   useEffect(() => {
     resultsRef.current = results;
@@ -375,6 +376,17 @@ function Globe({ onGuess, results, ref }: GlobeProps) {
   useEffect(() => {
     const el = svgRef.current;
     if (!el) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const rect = el.getBoundingClientRect();
+      setRipple({ cx: e.clientX - rect.left, cy: e.clientY - rect.top, key: Date.now() });
+    };
+    el.addEventListener("pointerdown", onPointerDown);
+    return () => el.removeEventListener("pointerdown", onPointerDown);
+  }, []);
+
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
@@ -394,6 +406,7 @@ function Globe({ onGuess, results, ref }: GlobeProps) {
       initial={{ opacity: 0, scale: 0.88 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.55, ease: "easeOut" }}
+      style={{ position: "relative" }}
     >
       <svg
         ref={svgRef}
@@ -401,6 +414,20 @@ function Globe({ onGuess, results, ref }: GlobeProps) {
         height={size.h}
         style={{ cursor: "grab", display: "block" }}
       />
+      <AnimatePresence>
+        {ripple && (
+          <motion.div
+            key={ripple.key}
+            className="globe-ripple"
+            style={{ left: ripple.cx, top: ripple.cy }}
+            initial={{ width: 10, height: 10, opacity: 0.6 }}
+            animate={{ width: 70, height: 70, opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.45, ease: "easeOut" }}
+            onAnimationComplete={() => setRipple(null)}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
