@@ -1,6 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
 import type { Country } from "../../data/countries";
-import { flagEmoji } from "../../data/countries";
 import { MAX_ATTEMPTS } from "../../constants/game";
 import { useVisualViewport } from "../../hooks/useVisualViewport";
 import type { GameMode } from "../../types/game";
@@ -28,7 +27,6 @@ export default function TaskPanel({
   const { offsetLeft, offsetTop, width, scale } = useVisualViewport();
   const inv = 1 / scale;
 
-  const isFlags = mode === "flags";
   const isCapitals = mode === "capitals";
 
   return (
@@ -43,44 +41,20 @@ export default function TaskPanel({
       }}
     >
       <p className="task-panel__label">
-        {isFlags ? "Найдите флаг этой страны" : isCapitals ? "Найдите страну со столицей" : "Найдите на карте"}
+        {isCapitals ? "Найдите страну со столицей" : "Найдите на карте"}
       </p>
 
       <AnimatePresence mode="wait">
-        {isFlags ? (
-          <motion.div
-            key={`flag-${country?.id}`}
-            className="task-panel__flag"
-            initial={{ opacity: 0, scale: 0.7 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.7 }}
-            transition={{ duration: 0.18 }}
-          >
-            {country ? flagEmoji(country.iso2) : ""}
-          </motion.div>
-        ) : isCapitals ? (
-          <motion.h1
-            key={`cap-${country?.id}`}
-            className="task-panel__country"
-            initial={{ opacity: 0, x: -18 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 18 }}
-            transition={{ duration: 0.18 }}
-          >
-            {country?.capital}
-          </motion.h1>
-        ) : (
-          <motion.h1
-            key={country?.id}
-            className="task-panel__country"
-            initial={{ opacity: 0, x: -18 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 18 }}
-            transition={{ duration: 0.18 }}
-          >
-            {country?.name}
-          </motion.h1>
-        )}
+        <motion.h1
+          key={country?.id}
+          className="task-panel__country"
+          initial={{ opacity: 0, x: -18 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 18 }}
+          transition={{ duration: 0.18 }}
+        >
+          {isCapitals ? country?.capital : country?.name}
+        </motion.h1>
       </AnimatePresence>
 
       <AnimatePresence mode="wait">
@@ -92,7 +66,7 @@ export default function TaskPanel({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18 }}
         >
-          {isFlags ? country?.name : isCapitals ? country?.en : country?.en}
+          {country?.en}
         </motion.p>
       </AnimatePresence>
 

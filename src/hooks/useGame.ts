@@ -68,7 +68,6 @@ export function useGame(onGameEnd?: () => void, config?: GameConfig): UseGameRet
         mode: "classic",
         region: "all",
         difficulty: "all",
-        countdownSeconds: 120,
       },
     [config],
   );
@@ -205,6 +204,15 @@ export function useGame(onGameEnd?: () => void, config?: GameConfig): UseGameRet
     setFeedback(null);
     setIsOver(false);
   }, [clearFeedbackTimer, effectiveConfig]);
+
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    restart();
+  }, [restart]);
 
   const totalRounds = queue.length;
   const currentCountry = queue[currentIdx];
