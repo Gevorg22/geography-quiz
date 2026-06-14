@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { useVisualViewport } from "../../hooks/useVisualViewport";
 import "./ZoomControls.css";
 
@@ -7,26 +8,28 @@ interface ZoomControlsProps {
 }
 
 export default function ZoomControls({ onZoomIn, onZoomOut }: ZoomControlsProps) {
-  const { offsetLeft, offsetTop, width, height } = useVisualViewport();
+  const { offsetLeft, offsetTop, width, height, scale } = useVisualViewport();
+  const inv = 1 / scale;
 
   const isMobile = width < 600;
   const marginRight = isMobile ? 8 : 14;
-  const marginBottom = isMobile ? 12 : 0;
+  const marginBottom = isMobile ? 12 : 14;
 
-  const left = offsetLeft + width - marginRight;
-  const top = isMobile
-    ? offsetTop + height - marginBottom
-    : offsetTop + height / 2;
-
-  const transform = isMobile
-    ? "translate(-100%, -100%)"
-    : "translate(-100%, -50%)";
+  const layoutW = window.innerWidth;
+  const layoutH = window.innerHeight;
+  const vRight = offsetLeft + width;
+  const vBottom = offsetTop + height;
 
   return (
-    <div
+    <motion.div
       className="zoom-controls"
       aria-label="Управление масштабом"
-      style={{ left, top, transform }}
+      style={{
+        right: layoutW - vRight + marginRight,
+        bottom: layoutH - vBottom + marginBottom,
+        scale: inv,
+        transformOrigin: "bottom right",
+      }}
     >
       <button
         className="zoom-btn"
@@ -44,6 +47,6 @@ export default function ZoomControls({ onZoomIn, onZoomOut }: ZoomControlsProps)
       >
         −
       </button>
-    </div>
+    </motion.div>
   );
 }

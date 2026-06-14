@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { useVisualViewport } from "../../hooks/useVisualViewport";
 import type { GameMode } from "../../types/game";
 import { MODE_ICONS } from "../../types/game";
@@ -22,15 +23,18 @@ export default function GameHeader({
   streak = 0,
   mode = "classic",
 }: GameHeaderProps) {
-  const { offsetLeft, offsetTop, width } = useVisualViewport();
+  const { offsetLeft, offsetTop, width, scale } = useVisualViewport();
+  const inv = 1 / scale;
 
   return (
-    <header
+    <motion.header
       className="game-header"
       style={{
         left: offsetLeft,
         top: offsetTop,
-        width: width,
+        width: width * scale,
+        scale: inv,
+        transformOrigin: "top left",
       }}
     >
       <div className="game-header__logo">
@@ -69,6 +73,6 @@ export default function GameHeader({
           </button>
         )}
       </div>
-    </header>
+    </motion.header>
   );
 }
