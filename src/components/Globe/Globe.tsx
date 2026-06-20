@@ -247,7 +247,8 @@ function Globe({ onGuess, results, ref }: GlobeProps) {
         if (event.pointerType === "touch") return;
         d3.select(this).attr("fill", getCountryFill(resultsRef.current, d.id));
       })
-      .on("click", function (this: SVGPathElement, _event: PointerEvent, d: GeoJSON.Feature) {
+      .on("pointerup", function (this: SVGPathElement, event: PointerEvent, d: GeoJSON.Feature) {
+        if (!event.isPrimary) return;
         if (!isDragging.current) onGuessRef.current(normalizeId(d.id));
       });
 
@@ -412,7 +413,7 @@ function Globe({ onGuess, results, ref }: GlobeProps) {
         ref={svgRef}
         width={size.w}
         height={size.h}
-        style={{ cursor: "grab", display: "block" }}
+        style={{ cursor: "grab", display: "block", touchAction: "none" }}
       />
       <AnimatePresence>
         {ripple && (
